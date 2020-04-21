@@ -1,0 +1,65 @@
+[12:18:36] main.cc:84: host        = 0.0.0.0
+[12:18:36] main.cc:85: port        = 9090
+[12:18:36] main.cc:86: port_end    = 9099
+[12:18:36] main.cc:87: tracker     = ('192.168.0.90', 9190)
+[12:18:36] main.cc:88: key         = aditya
+[12:18:36] main.cc:89: custom_addr = 
+[12:18:36] main.cc:90: silent      = False
+[12:18:36] main.cc:240: Starting CPP Server, Press Ctrl+C to stop.
+[12:18:36] rpc_server.cc:126: PID of NVIDIA-CUDA-MPS-CONTROL is 96678
+PID of the MPS server is 97258
+
+[12:18:36] rpc_server.cc:156: bind to 0.0.0.0:9090
+[12:18:36] rpc_tracker_client.h:198: Tracker connecting to 192.168.0.90:9190
+PID of the MPS server is 97258
+
+[12:18:36] ../../src/common/socket.h:263: Bind failed to 0.0.0.0:9090
+[12:18:36] rpc_server.cc:170: bind to 0.0.0.0:9091
+[12:18:36] rpc_tracker_client.h:198: Tracker connecting to 192.168.0.90:9190
+PID of the MPS server is 97258
+
+[12:18:37] rpc_server.cc:203: 0 Processes Dead
+[12:18:38] rpc_server.cc:203: 0 Processes Dead
+[12:18:39] rpc_server.cc:203: 0 Processes Dead
+[12:18:40] rpc_server.cc:203: 0 Processes Dead
+[12:18:41] rpc_server.cc:203: 0 Processes Dead
+[12:18:43] rpc_server.cc:203: 0 Processes Dead
+[12:18:43] rpc_server.cc:203: 0 Processes Dead
+[12:18:44] rpc_server.cc:203: 0 Processes Dead
+[12:18:45] rpc_server.cc:203: 0 Processes Dead
+[12:18:47] rpc_server.cc:203: 0 Processes Dead
+[12:18:47] rpc_server.cc:203: 0 Processes Dead
+[12:18:48] rpc_server.cc:203: 0 Processes Dead
+[12:18:49] rpc_server.cc:203: 0 Processes Dead
+[12:18:51] rpc_server.cc:203: 0 Processes Dead
+[12:18:51] rpc_server.cc:203: 0 Processes Dead
+[12:18:53] rpc_server.cc:203: 0 Processes Dead
+[12:18:53] rpc_server.cc:203: 0 Processes Dead
+[12:18:55] rpc_server.cc:203: 0 Processes Dead
+[12:18:55] rpc_server.cc:203: 0 Processes Dead
+[12:18:57] rpc_server.cc:203: 0 Processes Dead
+[12:18:57] rpc_server.cc:203: 0 Processes Dead
+[12:18:58] rpc_server.cc:203: 0 Processes Dead
+[12:19:00] rpc_server.cc:203: 0 Processes Dead
+[12:19:01] rpc_server.cc:203: 0 Processes Dead
+[12:19:02] rpc_server.cc:203: 0 Processes Dead
+[12:19:03] rpc_server.cc:203: 0 Processes Dead
+[12:19:04] rpc_server.cc:203: 0 Processes Dead
+[12:19:04] rpc_server.cc:543: Connection success 192.168.0.80:55726
+[12:19:05] rpc_server.cc:203: 0 Processes Dead
+[12:19:06] rpc_server.cc:203: 0 Processes Dead
+[12:19:07] rpc_server.cc:203: 0 Processes Dead
+[12:19:08] rpc_server.cc:203: 0 Processes Dead
+[12:19:09] rpc_server.cc:203: 0 Processes Dead
+[12:19:10] rpc_server.cc:203: 0 Processes Dead
+[12:19:11] rpc_server.cc:203: 0 Processes Dead
+[12:19:12] rpc_server.cc:203: 0 Processes Dead
+[12:19:13] rpc_server.cc:203: 0 Processes Dead
+[12:19:14] rpc_server.cc:203: 0 Processes Dead
+[12:19:15] rpc_server.cc:203: 0 Processes Dead
+[12:19:16] rpc_server.cc:203: 0 Processes Dead
+[12:19:17] rpc_server.cc:203: 0 Processes Dead
+[12:19:18] rpc_server.cc:203: 0 Processes Dead
+[12:19:19] rpc_server.cc:203: 0 Processes Dead
+[12:19:20] rpc_server.cc:203: 0 Processes Dead
+[12:19:21] rpc_server.cc:203: 0 Processes Dead

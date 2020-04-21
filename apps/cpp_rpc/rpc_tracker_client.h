@@ -189,7 +189,7 @@ class TrackerClient {
    * \param retry_period Number of seconds before we retry again.
    * \return TCPSocket The socket information if connect is success.
    */
-  common::TCPSocket ConnectWithRetry(int timeout = 60, int retry_period = 5) {
+  common::TCPSocket ConnectWithRetry(int timeout = 30, int retry_period = 2) {
     auto tbegin = std::chrono::system_clock::now();
     while (true) {
       common::SockAddr addr(tracker_addr_);

@@ -21,6 +21,8 @@
  * \file rpc_server.cc
  * \brief RPC Server implementation.
  */
+//#define __linux__
+
 #include <tvm/runtime/registry.h>
 
 #if defined(__linux__) || defined(__ANDROID__)
@@ -33,6 +35,9 @@
 #include <thread>
 #include <chrono>
 #include <string>
+
+#include <cuda_runtime.h>
+#include <cuda.h>
 
 #include "rpc_server.h"
 #include "rpc_env.h"
@@ -49,7 +54,7 @@ namespace runtime {
  * \param status status value
  */
 #if defined(__linux__) || defined(__ANDROID__)
-static pid_t waitPidEintr(int *status) {
+__attribute__((unused)) static pid_t waitPidEintr(int *status) {
   pid_t pid = 0;
   while ((pid = waitpid(-1, status, 0)) == -1) {
     if (errno == EINTR) {
@@ -90,6 +95,9 @@ class RPCServer {
     tracker_addr_ = tracker_addr;
     key_ = key;
     custom_addr_ = custom_addr;
+    //zero the count instances variable
+    count_instances = 0;
+    gpu_reset_count = 0;
   }
 
   /*!
@@ -105,22 +113,41 @@ class RPCServer {
    * \brief Start Creates the RPC listen process and execution.
   */
   void Start() {
-    listen_sock_.Create();
-    my_port_ = listen_sock_.TryBindHost(host_, port_, port_end_);
-    LOG(INFO) << "bind to " << host_ << ":" << my_port_;
-    listen_sock_.Listen(1);
-    std::future<void> proc(std::async(std::launch::async, &RPCServer::ListenLoopProc, this));
-    proc.get();
-    // Close the listen socket
-    listen_sock_.Close();
+	  //int fork_count = 0;
+	  //while(true){
+	//	  fork_count++;
+	//	  printf("Creating a new child process for %d time.", fork_count);
+	//	  const pid_t worker_pid = fork();
+	//	  if (worker_pid == 0) {
+			  // Worker process
+			  listen_sock_.Create();
+			  my_port_ = listen_sock_.TryBindHost(host_, port_, port_end_);
+			  LOG(INFO) << "bind to " << host_ << ":" << my_port_;
+			  listen_sock_.Listen(1);
+			  /* why don't we rather fork the process and wait for the result */
+			  std::future<void> proc(std::async(std::launch::async, &RPCServer::ListenLoopProc, this));
+			  proc.get();
+
+			  // Close the listen socket
+			  listen_sock_.Close();
+//		  }
+	//	  int status = 0;
+		  //wait for the child process
+//		  waitpid(worker_pid,&status,0);
+//		  printf("Exit Status of the Worker was: %d",status);
+	//  }
   }
 
  private:
+  int count_instances; //private variable to count instances
+  int gpu_reset_count; //counting number of time GPU is reset
   /*!
    * \brief ListenLoopProc The listen process.
    */
   void ListenLoopProc() {
     TrackerClient tracker(tracker_addr_, key_, custom_addr_);
+    pid_t mps_server_pid, prev_server_pid;
+    prev_server_pid = 0;
     while (true) {
       common::TCPSocket conn;
       common::SockAddr addr("0.0.0.0", 0);
@@ -143,8 +170,85 @@ class RPCServer {
         continue;
       }
 
-      int timeout = GetTimeOutFromOpts(opts);
+
+      __attribute__((unused)) int timeout = GetTimeOutFromOpts(opts);
       #if defined(__linux__) || defined(__ANDROID__)
+
+      //CUcontext gpu_context;
+      //cuCtxCreate(&gpu_context, CU_CTX_SCHED_SPIN,0);
+      //Aditya's code
+      int num_sms;
+      cudaDeviceGetAttribute(&num_sms,cudaDevAttrMultiProcessorCount,0);
+      size_t gpu_free, total_gpu, gpu_occupied;
+      cudaError_t errval = cudaMemGetInfo(&gpu_free, &total_gpu);
+      if (errval != cudaSuccess) {
+    	  LOG(INFO)<<"Error Getting GPU Mem. Error: "<<errval<<" Restarting with another process";
+    	  LOG(INFO) << "Socket Connection Closed";
+    	  conn.Close();
+    	  exit(0);
+      }
+      gpu_occupied = total_gpu - gpu_free;
+      LOG(INFO)<<"GPU Memory: Total: "<<(total_gpu/(1024*1024*1024))<<" Free: "<<(gpu_free/(1024*1024*1024))<<" Occupied Mem: "<<(gpu_occupied/(1024*1024*1024))<<" Time GPU is Reset: "<<gpu_reset_count;
+      if (gpu_occupied > total_gpu / 4) {
+    	  gpu_reset_count++;
+    	  LOG(INFO)<<"More than quarter of GPU memory exceeded. Resetting GPU context. Number of time context is reset: "<<gpu_reset_count;
+    	  cudaDeviceReset();
+    	  //now wait till other process have also freed the memory
+    	  int counter = 0;
+    	  while(gpu_occupied> total_gpu/4){
+    		 errval = cudaMemGetInfo(&gpu_free, &total_gpu);
+    		 gpu_occupied = total_gpu-gpu_free;
+    		 counter++;
+    		 if(counter >10000){
+    			 cudaDeviceReset();
+    		 }
+    	  }
+      }
+
+      count_instances++;
+      ServerLoopProc(conn,addr);
+      conn.Close();
+      cudaError_t last_error = cudaGetLastError();
+      //cuCtxDestroy(gpu_context); //destroying the GPU context
+      LOG(INFO)<<"Last CUDA ERROR: "<<last_error;
+      if (last_error != cudaSuccess) {
+    	  LOG(INFO)<<"Restarting the process due to GPU error: ";
+    	  LOG(INFO) << "Socket Connection Closed";
+    	  conn.Close();
+    	  exit(0);
+      }
+      LOG(INFO) <<"Counting the number of instances: "<<count_instances <<" Multiprocessor count: "<<num_sms;
+
+      //similarly check if GPU memory occupancy is high. Reset if it is.
+      errval = cudaMemGetInfo(&gpu_free, &total_gpu);
+      gpu_occupied = total_gpu-gpu_free;
+      if (gpu_occupied > total_gpu / 4) {
+    	  gpu_reset_count++;
+    	  LOG(INFO)<<"More than quarter of GPU memory exceeded. Resetting GPU context. Number of time context is reset: "<<gpu_reset_count;
+    	  cudaDeviceReset();
+      }
+      char mps_server_pid_s[1024];
+      FILE *cmd2 = popen("pidof nvidia-cuda-mps-server", "r");
+      fgets(mps_server_pid_s, 1024, cmd2);
+      mps_server_pid = strtoul(mps_server_pid_s, NULL, 10);
+      pclose(cmd2);
+      if(prev_server_pid != 0){
+    	  if(mps_server_pid != prev_server_pid){
+    		  LOG(INFO)<<"MPS server change detected, exiting...";
+    		  conn.Close();
+    		  exit(0);
+    	  }
+      }
+      else
+      {
+    	  prev_server_pid = mps_server_pid;
+      }
+
+      
+      //if(count_instances%50 ==0 )
+      //	cudaDeviceReset();
+      //CODE CHANGED TO REMOVE FORKING REQUIREMENT
+      /*
         // step 3: serving
         if (timeout != 0) {
           const pid_t timer_pid = fork();
@@ -191,7 +295,9 @@ class RPCServer {
           int status = 0;
           wait(&status);
           LOG(INFO) << "Child pid=" << pid << " exited, Process status =" << status;
+
         }
+        */
       #else
         // step 3: serving
         std::future<void> proc(std::async(std::launch::async,
@@ -207,7 +313,7 @@ class RPCServer {
       #endif
       // close from our side.
       LOG(INFO) << "Socket Connection Closed";
-      conn.Close();
+      //conn.Close();
     }
   }
 

@@ -1,0 +1,103 @@
+[13:42:43] main.cc:84: host        = 0.0.0.0
+[13:42:43] main.cc:85: port        = 9090
+[13:42:43] main.cc:86: port_end    = 9099
+[13:42:43] main.cc:87: tracker     = ('192.168.0.90', 9190)
+[13:42:43] main.cc:88: key         = aditya
+[13:42:43] main.cc:89: custom_addr = 
+[13:42:43] main.cc:90: silent      = False
+[13:42:43] main.cc:240: Starting CPP Server, Press Ctrl+C to stop.
+Creating a new child process for 1 time.[13:42:43] ../../src/common/socket.h:263: Bind failed to 0.0.0.0:9090
+[13:42:43] ../../src/common/socket.h:263: Bind failed to 0.0.0.0:9091
+[13:42:43] rpc_server.cc:124: bind to 0.0.0.0:9092
+[13:42:43] rpc_tracker_client.h:198: Tracker connecting to 192.168.0.90:9190
+[13:44:58] rpc_server.cc:340: Connection success 192.168.0.80:46246
+[13:44:59] rpc_server.cc:183: GPU Memory: Total: 15 Free: 15 Occupied Mem: 0 Time GPU is Reset: 0
+[13:44:59] rpc_server.cc:190: Last CUDA ERROR: 0
+[13:44:59] rpc_server.cc:357: Finish serving 192.168.0.80:46246
+[13:44:59] rpc_server.cc:199: Counting the number of instances: 1 Multiprocessor count: 20
+[13:44:59] rpc_server.cc:270: Socket Connection Closed
+[13:44:59] rpc_server.cc:340: Connection success 192.168.0.80:46338
+[13:44:59] rpc_server.cc:183: GPU Memory: Total: 15 Free: 14 Occupied Mem: 0 Time GPU is Reset: 0
+[13:44:59] rpc_server.cc:190: Last CUDA ERROR: 0
+Creating a new child process for 1 time.Exit Status of the Worker was: 139Creating a new child process for 2 time.[13:44:59] ../../src/common/socket.h:263: Bind failed to 0.0.0.0:9090
+[13:44:59] ../../src/common/socket.h:263: Bind failed to 0.0.0.0:9091
+[13:44:59] ../../src/common/socket.h:263: Bind failed to 0.0.0.0:9092
+[13:44:59] ../../src/common/socket.h:263: Bind failed to 0.0.0.0:9093
+[13:44:59] ../../src/common/socket.h:263: Bind failed to 0.0.0.0:9094
+[13:44:59] rpc_server.cc:124: bind to 0.0.0.0:9095
+[13:44:59] rpc_tracker_client.h:198: Tracker connecting to 192.168.0.90:9190
+[13:45:00] rpc_server.cc:340: Connection success 192.168.0.80:39172
+[13:45:00] rpc_server.cc:183: GPU Memory: Total: 15 Free: 14 Occupied Mem: 0 Time GPU is Reset: 0
+[13:45:00] rpc_server.cc:190: Last CUDA ERROR: 0
+[13:45:00] rpc_env.cc:63: Load module from ./rpc/tmp_func_fce7083a517cf632.tar.so ...
+[13:45:01] rpc_server.cc:357: Finish serving 192.168.0.80:39172
+[13:45:01] rpc_env.cc:246: Remove file ./rpc/tmp failed
+[13:45:01] rpc_env.cc:91: Remove directory ./rpc failed
+[13:45:01] rpc_server.cc:199: Counting the number of instances: 1 Multiprocessor count: 20
+[13:45:01] rpc_server.cc:270: Socket Connection Closed
+[13:45:01] rpc_server.cc:340: Connection success 192.168.0.80:39182
+[13:45:01] rpc_server.cc:183: GPU Memory: Total: 15 Free: 14 Occupied Mem: 1 Time GPU is Reset: 0
+[13:45:01] rpc_server.cc:190: Last CUDA ERROR: 0
+[13:45:02] rpc_server.cc:357: Finish serving 192.168.0.80:39182
+[13:45:02] rpc_server.cc:199: Counting the number of instances: 2 Multiprocessor count: 20
+[13:45:02] rpc_server.cc:270: Socket Connection Closed
+[13:45:02] rpc_server.cc:340: Connection success 192.168.0.80:39184
+[13:45:02] rpc_server.cc:183: GPU Memory: Total: 15 Free: 14 Occupied Mem: 1 Time GPU is Reset: 0
+[13:45:02] rpc_server.cc:190: Last CUDA ERROR: 0
+[13:45:02] rpc_env.cc:63: Load module from ./rpc/tmp_func_522f82195bcc34c2.tar.so ...
+[13:45:03] rpc_server.cc:357: Finish serving 192.168.0.80:39184
+[13:45:03] rpc_env.cc:246: Remove file ./rpc/tmp failed
+[13:45:03] rpc_env.cc:91: Remove directory ./rpc failed
+[13:45:03] rpc_server.cc:199: Counting the number of instances: 3 Multiprocessor count: 20
+[13:45:03] rpc_server.cc:270: Socket Connection Closed
+[13:45:03] rpc_server.cc:340: Connection success 192.168.0.80:39196
+[13:45:03] rpc_server.cc:183: GPU Memory: Total: 15 Free: 14 Occupied Mem: 1 Time GPU is Reset: 0
+[13:45:03] rpc_server.cc:190: Last CUDA ERROR: 0
+[13:45:03] rpc_env.cc:63: Load module from ./rpc/tmp_func_85a2c1d8817b71e6.tar.so ...
+[13:45:08] rpc_server.cc:357: Finish serving 192.168.0.80:39196
+[13:45:08] rpc_server.cc:199: Counting the number of instances: 4 Multiprocessor count: 20
+[13:45:08] rpc_server.cc:270: Socket Connection Closed
+[13:45:08] rpc_server.cc:340: Connection success 192.168.0.80:39218
+[13:45:08] rpc_server.cc:183: GPU Memory: Total: 15 Free: 12 Occupied Mem: 2 Time GPU is Reset: 0
+[13:45:08] rpc_server.cc:190: Last CUDA ERROR: 0
+[13:45:08] rpc_env.cc:63: Load module from ./rpc/tmp_func_78f8defde9ab7cbb.tar.so ...
+[13:45:09] rpc_server.cc:357: Finish serving 192.168.0.80:39218
+[13:45:09] rpc_server.cc:199: Counting the number of instances: 5 Multiprocessor count: 20
+[13:45:09] rpc_server.cc:270: Socket Connection Closed
+[13:45:09] rpc_server.cc:340: Connection success 192.168.0.80:39228
+[13:45:09] rpc_server.cc:183: GPU Memory: Total: 15 Free: 12 Occupied Mem: 2 Time GPU is Reset: 0
+[13:45:09] rpc_server.cc:190: Last CUDA ERROR: 0
+[13:45:09] rpc_server.cc:357: Finish serving 192.168.0.80:39228
+[13:45:09] rpc_env.cc:246: Remove file ./rpc/tmp failed
+[13:45:09] rpc_env.cc:91: Remove directory ./rpc failed
+[13:45:09] rpc_server.cc:199: Counting the number of instances: 6 Multiprocessor count: 20
+[13:45:09] rpc_server.cc:270: Socket Connection Closed
+[13:45:09] rpc_server.cc:340: Connection success 192.168.0.80:39232
+[13:45:09] rpc_server.cc:183: GPU Memory: Total: 15 Free: 12 Occupied Mem: 2 Time GPU is Reset: 0
+[13:45:09] rpc_server.cc:190: Last CUDA ERROR: 0
+[13:45:10] rpc_server.cc:357: Finish serving 192.168.0.80:39232
+[13:45:10] rpc_server.cc:199: Counting the number of instances: 7 Multiprocessor count: 20
+[13:45:10] rpc_server.cc:270: Socket Connection Closed
+[13:45:10] rpc_server.cc:340: Connection success 192.168.0.80:39234
+[13:45:10] rpc_server.cc:183: GPU Memory: Total: 15 Free: 14 Occupied Mem: 0 Time GPU is Reset: 0
+[13:45:10] rpc_server.cc:190: Last CUDA ERROR: 0
+[13:45:10] rpc_env.cc:63: Load module from ./rpc/tmp_func_8119fb6c0e658bcb.tar.so ...
+[13:45:11] rpc_server.cc:357: Finish serving 192.168.0.80:39234
+[13:45:11] rpc_env.cc:246: Remove file ./rpc/tmp failed
+[13:45:11] rpc_env.cc:91: Remove directory ./rpc failed
+[13:45:11] rpc_server.cc:199: Counting the number of instances: 8 Multiprocessor count: 20
+[13:45:11] rpc_server.cc:270: Socket Connection Closed
+[13:45:11] rpc_server.cc:340: Connection success 192.168.0.80:39244
+[13:45:11] rpc_server.cc:180: Error Getting GPU Mem. Error: 4
+[13:45:11] rpc_server.cc:183: GPU Memory: Total: 0 Free: 0 Occupied Mem: 0 Time GPU is Reset: 0
+[13:45:11] rpc_server.cc:190: Last CUDA ERROR: 4
+[13:45:11] rpc_server.cc:192: Resetting CUDA due to memory error: 
+Creating a new child process for 1 time.Exit Status of the Worker was: 139Creating a new child process for 2 time.Exit Status of the Worker was: 139Creating a new child process for 3 time.[13:45:11] ../../src/common/socket.h:263: Bind failed to 0.0.0.0:9090
+[13:45:11] ../../src/common/socket.h:263: Bind failed to 0.0.0.0:9091
+[13:45:11] ../../src/common/socket.h:263: Bind failed to 0.0.0.0:9092
+[13:45:11] ../../src/common/socket.h:263: Bind failed to 0.0.0.0:9093
+[13:45:11] ../../src/common/socket.h:263: Bind failed to 0.0.0.0:9094
+[13:45:11] ../../src/common/socket.h:263: Bind failed to 0.0.0.0:9095
+[13:45:11] rpc_server.cc:124: bind to 0.0.0.0:9096
+[13:45:11] rpc_tracker_client.h:198: Tracker connecting to 192.168.0.90:9190
+[13:45:11] rpc_server.cc:340: Connection success 192.168.0.80:33396

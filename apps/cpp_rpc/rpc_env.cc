@@ -39,13 +39,27 @@
 #include "../../src/common/util.h"
 #include "../../src/runtime/file_util.h"
 
+//#define __linux__
+
 namespace tvm {
 namespace runtime {
 
 RPCEnv::RPCEnv() {
+
   #if defined(__linux__) || defined(__ANDROID__)
-    base_ = "./rpc";
-    mkdir(&base_[0], 0777);
+	/* Aditya changed the code */
+	const size_t max_pid_len = 12; // Could be system dependent.
+	int pid = getpid();
+	char mypid[13];
+	snprintf(mypid, max_pid_len, "%d", pid);
+	std::string pid_str = mypid;
+	std::cout<<"PID of the Process: "<<mypid<<std::endl;
+
+	//base_ = "./rpc";//original
+	base_ = "./rpc_"+pid_str;
+	std::cout<<"Base Directory : "<<base_<<std::endl;
+
+	mkdir(&base_[0], 0777);
 
     TVM_REGISTER_GLOBAL("tvm.rpc.server.workpath")
     .set_body([](TVMArgs args, TVMRetValue* rv) {
@@ -83,14 +97,17 @@ std::string RPCEnv::GetPath(std::string file_name) {
  */
 void RPCEnv::CleanUp() {
   #if defined(__linux__) || defined(__ANDROID__)
-    CleanDir(&base_[0]);
+    /* don't clean for now*/
+	CleanDir(&base_[0]);
     int ret = rmdir(&base_[0]);
     if (ret != 0) {
       LOG(WARNING) << "Remove directory " << base_ << " failed";
     }
   #else
     LOG(FATAL) << "Only support RPC in linux environment";
+
   #endif
+
 }
 
 /*!

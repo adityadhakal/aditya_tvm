@@ -42,7 +42,7 @@ namespace runtime {
  */
 TVM_DLL void RPCServerCreate(std::string host = "",
                              int port = 9090,
-                             int port_end = 9099,
+                             int port_end = 9129,
                              std::string tracker_addr = "",
                              std::string key = "",
                              std::string custom_addr = "",

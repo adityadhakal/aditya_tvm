@@ -30,6 +30,7 @@
 #include <cstring>
 #include <vector>
 #include <sstream>
+#include <cuda_runtime.h>
 
 #include "../../src/common/util.h"
 #include "../../src/common/socket.h"
@@ -255,6 +256,14 @@ int main(int argc, char * argv[]) {
     return 0;
   }
 
+/*  //CUDA Initialization with fixed memory
+  size_t memory_size_limit;
+  size_t stack_size_limit;
+  cudaDeviceGetLimit(&memory_size_limit, cudaLimitMallocHeapSize);
+  cudaDeviceGetLimit(&stack_size_limit, cudaLimitStackSize);
+  LOG(INFO)<<"GPU Malloc Limit: "<<memory_size_limit;
+  LOG(INFO)<<"GPU Thread Stack Limit: "<<stack_size_limit;
+*/
   if (0 == strcmp(argv[1], "server")) {
     RpcServer(argc, argv);
   } else {
