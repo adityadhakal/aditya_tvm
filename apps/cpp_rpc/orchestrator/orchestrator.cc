@@ -31,33 +31,18 @@ int main(void) {
 			child_pid = fork();
 			if(child_pid==0){
 				//child process
-
-				/*move directory for the process*/
-				//int status = chdir("/home/adhak001/dev/tvm_v06/apps/cpp_rpc/orchestrator/work_directory1");
-				//if(status != 0)
-				//	printf("Failed to Change directory.\n");
-
-				//Command Line arguments for excve
-				/*
-	   char *const paramlist[] = {"./tvm_rpc", "server", "--tracker=192.168.0.90:9190", "--key=aditya",NULL};
-		char *const envlist[] = {"CUDA_MPS_ACTIVE_THREAD_PERCENTAGE=50",NULL};
-
-		execve("./tvm_rpc", paramlist, envlist);
-		printf("Return not expected. Must be an execve error.n");
-		//_exit(0);
-				 */
-				//system("./tvm_rpc server --tracker=192.168.0.90:9190 --key=aditya");
-				system("/home/adhak001/dev/tvm_v06/apps/cpp_rpc/tvm_rpc server --tracker=192.168.0.90:9190 --key=aditya");
+				system("/home/adhak001/dev_tvm/aditya_tvm/apps/cpp_rpc/tvm_rpc server --tracker=192.168.0.90:9190 --key=aditya");
 				_exit(0);
 			}
 		}
+		//if 2nd process should be started/restarted
 		if(proc2){
 			proc2 = 0;
 			//second fork
 			child_pid2 = fork();
 			if(child_pid2==0){
 				//second child
-				system("/home/adhak001/dev/tvm_v06/apps/cpp_rpc/tvm_rpc server --tracker=192.168.0.90:9190 --key=aditya");
+				system("/home/adhak001/dev_tvm/aditya_tvm/apps/cpp_rpc/tvm_rpc server --tracker=192.168.0.90:9190 --key=aditya");
 				_exit(0);
 			}
 		}
@@ -75,10 +60,7 @@ int main(void) {
 			std::cout<<"Proc 2 has died, restarting it"<<std::endl;
 			proc2 = 1;
 		}
-
-		//printf("Child process died. ");
-		//std::cout<<"Restarting the Tuning Process"<<std::endl;
-		sleep(1);
+		usleep(100000); //100 ms sleep
 	}
 	return 0;
 }

@@ -56,8 +56,32 @@ class CUDAModuleNode : public runtime::ModuleNode {
   ~CUDAModuleNode() {
     for (size_t i = 0; i < module_.size(); ++i) {
       if (module_[i] != nullptr) {
+    	  LOG(INFO)<<"Destroying the CUDA Module";
         CUDA_CALL(cudaSetDevice(static_cast<int>(i)));
-        CUDA_DRIVER_CALL(cuModuleUnload(module_[i]));
+        LOG(INFO)<<"CUDA Set Device as: "<<i;
+        cudaError_t last_error = cudaGetLastError();
+        if(last_error != cudaSuccess){
+        	LOG(INFO)<<"CUDA Error Happened: "<<last_error<<" Error String: "<<cudaGetErrorString(last_error);
+        	LOG(INFO)<<"Resetting the GPU to avoid crashing. Module not unloaded as the CUDA context is reset ";
+        	cudaDeviceReset();
+
+        	//if the cuda error is 77, i.e. cuda memory error. there is no way to recover from this other than
+        	//to quit the process and restart.
+        	// rather we exit here than let program to crash,
+        	if(last_error == cudaErrorIllegalAddress)
+        	{
+        		LOG(INFO)<<"Irrecoverable CUDA error: 77 cudaErrorIllegalAddress occured. Exiting.";
+        		exit(0);
+        	}
+
+        	//check the cuda Error status again
+        	cudaError_t post_reset_error = cudaGetLastError();
+        	LOG(INFO)<<"Post Device Reset: "<<post_reset_error<<" Error String: "<<cudaGetErrorString(post_reset_error);
+        }
+        if(last_error == cudaSuccess){
+        	CUDA_DRIVER_CALL(cuModuleUnload(module_[i]));
+        	LOG(INFO)<<"cuModuleUnload is successful.";
+        }
       }
     }
   }
