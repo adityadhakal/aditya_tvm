@@ -145,6 +145,11 @@ class RPCServer {
     char *fget_ret;
     char mps_server_pid_s[1024];
     prev_server_pid = 0;
+
+    //checking number of SMs to verify we are applying right percentage.
+    int num_sms;
+    cudaDeviceGetAttribute(&num_sms,cudaDevAttrMultiProcessorCount,0);
+
     while (true) {
       common::TCPSocket conn;
       common::SockAddr addr("0.0.0.0", 0);
@@ -174,10 +179,7 @@ class RPCServer {
       pid_t child_pid = fork();
       if(child_pid == 0){
     	  while(true){
-
     		  //first accept the connection
-    		  //this has been done above
-
     		  try{
     			  //Step 2: wait for in-coming connections
     			  AcceptConnection(&tracker, &conn, &addr, &opts);
@@ -187,7 +189,8 @@ class RPCServer {
     			  tracker.Close();
     			  //exit the fork
     			  LOG(INFO)<<"Cannot Reach the Tracker.. quitting the child";
-    			  _exit(0);
+    			  //_exit(0);
+    			  continue;
     		  }
     		  catch (std::exception& e) {
     			  // Other errors
@@ -199,65 +202,82 @@ class RPCServer {
     		  __attribute__((unused)) int timeout = GetTimeOutFromOpts(opts);
 				#if defined(__linux__) || defined(__ANDROID__)
 
-    		  //Aditya's code
+    		  //code that checks if CUDA call returns in time
     		  std::future<cudaError_t> cuda_call(std::async(std::launch::async,&cudaGetLastError));
 
-    		  std::future_status  status;
+    		  std::future_status status;
     		  status = cuda_call.wait_for(std::chrono::seconds(5));
     		  if(status == std::future_status::timeout){
     			  LOG(INFO)<<"CUDA CALL TIMEOUT";
-    			  //char mps_server_pid_s[1024];
+    			  //Trying to find the PID of CUDA MPS SERVER
     			  cmd2 = popen("pidof nvidia-cuda-mps-server", "r");
     			  fget_ret = fgets(mps_server_pid_s, 1024, cmd2);
     			  if(fget_ret == NULL){
     				  printf("Reading PID of nvidia-cuda-mps-server did not work.\n");
     			  }
+    			  //Convert the string to pid
     			  pid_t mps_server_pid2 = strtoul(mps_server_pid_s, NULL, 10);
-
     			  pclose(cmd2);
-    			  LOG(INFO)<<"MPS server "<<mps_server_pid2<<" has been killed.";
-    			  kill(mps_server_pid2, 9); //kill the MPS server before quitting
+
+    			  //Prevent killing the process 0.
+    			  if(mps_server_pid2>0){
+    				  LOG(INFO)<<"MPS server "<<mps_server_pid2<<" has been killed.";
+    				  kill(mps_server_pid2, 9); //kill the MPS server before quitting
+    			  }
     			  exit(0);
     		  }
+
     		  cudaError_t cuda_error = cuda_call.get();
     		  LOG(INFO)<<"CUDA error before loading module "<<cuda_error;
-
-    		  int num_sms;
-    		  cudaDeviceGetAttribute(&num_sms,cudaDevAttrMultiProcessorCount,0);
     		  size_t gpu_free, total_gpu, gpu_occupied;
+
     		  cudaError_t errval = cudaMemGetInfo(&gpu_free, &total_gpu);
     		  if (errval != cudaSuccess) {
-    			  LOG(INFO)<<"Error Getting GPU Mem. Error: "<<errval<<" Restarting with another process";
-    			  LOG(INFO) << "Socket Connection Closed";
-    			  conn.Close();
-    			  exit(0);
+    			  LOG(INFO)<<"Error Getting GPU Mem. Error: "<<errval<<" Resetting and Checking again.";
+    			  cudaDeviceReset();
+    			  //Aditya's code that checks if CUDA call returns in time
+    			  std::future<cudaError_t> cuda_call2(std::async(std::launch::async,&cudaGetLastError));
+    			  std::future_status  status2;
+    			  status2 = cuda_call2.wait_for(std::chrono::seconds(5));
+    			  if(status2 == std::future_status::timeout){
+    				  //  The problem seems to persist seriously that we cannot launch any CUDA functions
+    				  exit(0);
+    			  }
+
+    			  cudaError_t errval2 = cuda_call2.get();
+    			  //if the error still persist
+    			  if(errval2 != cudaSuccess){
+    				  LOG(INFO) << "Socket Connection Closed";
+    				  conn.Close();
+    				  exit(0);
+    			  }
     		  }
     		  gpu_occupied = total_gpu - gpu_free;
-    		  LOG(INFO)<<"GPU Memory: Total: "<<(total_gpu/(1024*1024*1024))<<" Free: "<<(gpu_free/(1024*1024*1024))<<" Occupied Mem: "<<(gpu_occupied/(1024*1024*1024))<<" Time GPU is Reset: "<<gpu_reset_count;
-    		  if (gpu_occupied > total_gpu / 4) {
+    		  LOG(INFO)<<"GPU Memory: Total: "<<(total_gpu/(1024.0*1024*1024))<<" Free: "<<(gpu_free/(1024.0*1024*1024))<<" Occupied Mem: "<<(gpu_occupied/(1024.0*1024*1024))<<" Time GPU is Reset: "<<gpu_reset_count;
+    		  if (gpu_occupied > total_gpu / 2) {
     			  gpu_reset_count++;
     			  LOG(INFO)<<"More than quarter of GPU memory exceeded. Resetting GPU context. Number of time context is reset: "<<gpu_reset_count;
     			  cudaDeviceReset();
     			  //now wait till other process have also freed the memory
     			  int counter = 0;
-    			  while(gpu_occupied> total_gpu/4){
+    			  while(gpu_occupied> total_gpu/2){
+    				  sleep(1); //check for 3 seconds
     				  errval = cudaMemGetInfo(&gpu_free, &total_gpu);
     				  gpu_occupied = total_gpu-gpu_free;
     				  counter++;
-    				  if(counter >10000){
+    				  if(counter >3){
+    					  counter = 0;
     					  cudaDeviceReset();
     				  }
     			  }
     		  }
 
     		  count_instances++;
-
     		  /* rather than launching like this... we should launch with async*/
-
     		  ServerLoopProc(conn,addr);
-
     		  conn.Close();
     		  LOG(INFO)<<"Socket Closed";
+
     		  cudaError_t last_error = cudaGetLastError();
     		  //cuCtxDestroy(gpu_context); //destroying the GPU context
     		  LOG(INFO)<<"Last CUDA ERROR: "<<last_error;
@@ -272,9 +292,9 @@ class RPCServer {
     		  //similarly check if GPU memory occupancy is high. Reset if it is.
     		  errval = cudaMemGetInfo(&gpu_free, &total_gpu);
     		  gpu_occupied = total_gpu-gpu_free;
-    		  if (gpu_occupied > total_gpu / 4) {
+    		  if (gpu_occupied > total_gpu / 2) {
     			  gpu_reset_count++;
-    			  LOG(INFO)<<"More than quarter of GPU memory exceeded. Resetting GPU context. Number of time context is reset: "<<gpu_reset_count;
+    			  LOG(INFO)<<"More than half of GPU memory exceeded. Resetting GPU context. Number of time context is reset: "<<gpu_reset_count;
     			  cudaDeviceReset();
     		  }
 
