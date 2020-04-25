@@ -147,8 +147,8 @@ class RPCServer {
     prev_server_pid = 0;
 
     //checking number of SMs to verify we are applying right percentage.
-    int num_sms;
-    cudaDeviceGetAttribute(&num_sms,cudaDevAttrMultiProcessorCount,0);
+    //int num_sms;
+    //cudaDeviceGetAttribute(&num_sms,cudaDevAttrMultiProcessorCount,0);
 
     while (true) {
       common::TCPSocket conn;
@@ -287,7 +287,7 @@ class RPCServer {
     			  //conn.Close();
     			  exit(0);
     		  }
-    		  LOG(INFO) <<"Counting the number of instances Tuned till now: "<<count_instances <<" Multiprocessor count: "<<num_sms;
+    		  LOG(INFO) <<"Counting the number of instances Tuned till now: "<<count_instances;// <<" Multiprocessor count: "<<num_sms;
 
     		  //similarly check if GPU memory occupancy is high. Reset if it is.
     		  errval = cudaMemGetInfo(&gpu_free, &total_gpu);
