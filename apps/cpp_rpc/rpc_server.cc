@@ -229,6 +229,9 @@ class RPCServer {
 
     		  cudaError_t cuda_error = cuda_call.get();
     		  LOG(INFO)<<"CUDA error before loading module "<<cuda_error;
+		  int num_sms;
+		  cudaDeviceGetAttribute(&num_sms,cudaDevAttrMultiProcessorCount,0);
+		  LOG(INFO)<<"CUDA Attribute: num SMs: "<<num_sms;
     		  size_t gpu_free, total_gpu, gpu_occupied;
 
     		  cudaError_t errval = cudaMemGetInfo(&gpu_free, &total_gpu);
@@ -254,7 +257,7 @@ class RPCServer {
     		  }
     		  gpu_occupied = total_gpu - gpu_free;
     		  LOG(INFO)<<"GPU Memory: Total: "<<(total_gpu/(1024.0*1024*1024))<<" Free: "<<(gpu_free/(1024.0*1024*1024))<<" Occupied Mem: "<<(gpu_occupied/(1024.0*1024*1024))<<" Time GPU is Reset: "<<gpu_reset_count;
-    		  if (gpu_occupied > total_gpu / 2) {
+    		  if (gpu_occupied > (total_gpu*3 / 4)) {
     			  gpu_reset_count++;
     			  LOG(INFO)<<"More than quarter of GPU memory exceeded. Resetting GPU context. Number of time context is reset: "<<gpu_reset_count;
     			  cudaDeviceReset();

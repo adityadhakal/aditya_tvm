@@ -10,6 +10,7 @@
 #include <limits.h>
 #include <iostream>
 #include<stdlib.h>
+//#define TWO_PROCESS
 int main(void) {
 	char cwd[PATH_MAX];
 	if (getcwd(cwd, sizeof(cwd)) != NULL) {
@@ -22,8 +23,10 @@ int main(void) {
 	int proc1,proc2, proc3, proc4;
 	proc1 = 1;//flag for proc 1; let it spawn the process first time
 	proc2 = 1; //flag for proc 2; let it spawn the process first time
+	#ifndef TWO_PROCESS
 	proc3 = 1;// flag for proc 3;
 	proc4 = 1; //flag for proc 4;
+#endif //two_process
 	pid_t child_pid, child_pid2, child_pid3, child_pid4;
 	while(true){
 		if(proc1){
@@ -50,7 +53,8 @@ int main(void) {
 				_exit(0);
 			}
 		}
-		//if 2nd process should be started/restarted
+#ifndef TWO_PROCESS
+		//if 3rd process should be started/restarted
 		if(proc3){
 			proc3 = 0;
 			//second fork
@@ -74,6 +78,7 @@ int main(void) {
 				_exit(0);
 			}
 		}
+#endif //TWO_PROCESS
 		/* Below code uses waitpid to detect the child has quit. Detaching the child might be safer method as we don't have to call wait then */
 		int status = 0;
 		//wait(&status);
@@ -90,6 +95,7 @@ int main(void) {
 			std::cout<<"Proc 2 has died, restarting it"<<std::endl;
 			proc2 = 1;
 		}
+#ifndef TWO_PROCESS
 		return_pid3 = waitpid(child_pid3, &status, WNOHANG);
 		if(return_pid3 == child_pid3){
 			std::cout<<"Proc 3 has died, restarting it"<<std::endl;
@@ -100,6 +106,7 @@ int main(void) {
 			std::cout<<"Proc 4 has died, restarting it"<<std::endl;
 			proc4 = 1;
 		}
+#endif //TWO_PROCESS
 
 
 		/*

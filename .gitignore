@@ -236,3 +236,6 @@ conda/pkg
 #core files
 core
 *.core
+
+#tar files
+*.tar
