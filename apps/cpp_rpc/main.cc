@@ -256,6 +256,9 @@ int main(int argc, char * argv[]) {
     return 0;
   }
 
+  //set the environment value
+  setenv("CUDA_MPS_ACTIVE_THREAD_PERCENTAGE", "50", 1);
+
 /*  //CUDA Initialization with fixed memory
   size_t memory_size_limit;
   size_t stack_size_limit;

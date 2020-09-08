@@ -239,3 +239,6 @@ core
 
 #tar files
 *.tar
+
+#txt file
+*.txt

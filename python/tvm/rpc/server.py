@@ -81,12 +81,15 @@ def _server_env(load_library, work_path=None):
 
 def _serve_loop(sock, addr, load_library, work_path=None):
     """Server loop"""
+    begin_server_loop = time.process_time()
     sockfd = sock.fileno()
     temp = _server_env(load_library, work_path)
     base._ServerLoop(sockfd)
     if not work_path:
         temp.remove()
     logger.info("Finish serving %s", addr)
+    end_server_loop = time.process_time()
+    print("Server Loop Elapsed Time:,",end_server_loop-begin_server_loop)
 
 def _parse_server_opt(opts):
     # parse client options
@@ -188,6 +191,7 @@ def _listen_loop(sock, port, rpc_key, tracker_addr, load_library, custom_addr):
 
             # step 2: wait for in-coming connections
             conn, addr, opts = _accept_conn(sock, tracker_conn)
+            logger.info("connection: %s and addr: %d and opts: %s", conn, addr, opts)
         except (socket.error, IOError):
             # retry when tracker is dropped
             if tracker_conn:
@@ -198,6 +202,9 @@ def _listen_loop(sock, port, rpc_key, tracker_addr, load_library, custom_addr):
             raise exc
 
         # step 3: serving
+        #updating number of times it is run
+        Server.run_count = Server.run_count+1
+        start_time = time.process_time()
         work_path = util.tempdir()
         logger.info("connection from %s", addr)
         server_proc = multiprocessing.Process(target=_serve_loop,
@@ -218,7 +225,13 @@ def _listen_loop(sock, port, rpc_key, tracker_addr, load_library, custom_addr):
             # terminate the worker
             server_proc.terminate()
         work_path.remove()
-
+        end_time = time.process_time()
+        print("-----------------------")
+        print("Profile_no,", Server.run_count)
+        print("Begin_Time,", start_time)
+        print("End_Time,",end_time)
+        print("Elapsed_Time,",end_time-start_time)
+        print("-----------------------")
 
 def _connect_proxy_loop(addr, key, load_library):
     key = "server:" + key
@@ -315,7 +328,11 @@ class Server(object):
 
     silent: bool, optional
         Whether run this server in silent mode.
+
+    run_count: int
+        Number of configurations profiled
     """
+    run_count = 0
     def __init__(self,
                  host,
                  port=9091,

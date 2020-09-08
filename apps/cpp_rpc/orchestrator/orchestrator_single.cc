@@ -37,7 +37,7 @@ int main(void) {
 				//detatching the process
 				int rc = setsid();
 				//child process
-				system("/home/adhak001/dev_tvm/aditya_tvm/apps/cpp_rpc/tvm_rpc server --port=9090 --port-end=9180 --tracker=0.0.0.0:9190 --key=aditya");
+				system("/home/adhak001/dev_tvm/aditya_tvm/apps/cpp_rpc/tvm_rpc server --port=9090 --port-end=9180 --tracker=192.168.0.90:9190 --key=aditya");
 				_exit(0);
 			}
 		}
