@@ -164,10 +164,12 @@ def _listen_loop(sock, port, rpc_key, tracker_addr, load_library, custom_addr):
             conn.sendall(struct.pack("<i", base.RPC_CODE_SUCCESS))
             conn.sendall(struct.pack("<i", len(server_key)))
             conn.sendall(server_key.encode("utf-8"))
+            logger.info("conn %s,addr: %s we received from tracker",conn,addr)
             return conn, addr, _parse_server_opt(arr[1:])
 
     # Server logic
     tracker_conn = None
+    logger.info("Tracker conn %s and tracker addr %s",tracker_conn,tracker_addr)
     while True:
         try:
             # step 1: setup tracker and report to tracker
@@ -185,6 +187,31 @@ def _listen_loop(sock, port, rpc_key, tracker_addr, load_library, custom_addr):
 
             # step 2: wait for in-coming connections
             conn, addr, opts = _accept_conn(sock, tracker_conn)
+
+            tracker_conn2 = None
+            logger.info("options %s, addr %s, conn %s",opts,addr,conn)
+
+            '''
+
+            # step 1: setup tracker and report to tracker 2nd time
+            if tracker_addr and tracker_conn is None:
+                tracker_conn2 = base.connect_with_retry(tracker_addr)
+                tracker_conn2.sendall(struct.pack("<i", base.RPC_TRACKER_MAGIC))
+                magic2 = struct.unpack("<i", base.recvall(tracker_conn2, 4))[0]
+                if magic2 != base.RPC_TRACKER_MAGIC:
+                    raise RuntimeError("%s is not RPC Tracker" % str(tracker_addr))
+                # report status of current queue
+                cinfo2 = {"key" : "server:" + rpc_key}
+                base.sendjson(tracker_conn2,
+                              [TrackerCode.UPDATE_INFO, cinfo2])
+                assert base.recvjson(tracker_conn2) == TrackerCode.SUCCESS
+
+            logger.info("Trying the 2nd time to get another connection")
+            conn2, addr2, opts2 = _accept_conn(sock, tracker_conn2)
+            
+
+            logger.info("conn %s, addr %s, conn2 %s, addr2 %s, opts %s",conn,addr,conn2,addr2,opts)
+            '''
         except (socket.error, IOError):
             # retry when tracker is dropped
             if tracker_conn:

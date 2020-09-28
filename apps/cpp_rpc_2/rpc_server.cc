@@ -86,7 +86,8 @@ class RPCServer {
     tracker_addr_(std::move(tracker_addr)), key_(std::move(key)),
     custom_addr_(std::move(custom_addr))
   {
-    
+    my_port_2 = 0;//initialization of my_port_2
+    my_port_3 = 0;
   }
 
   /*!
@@ -107,13 +108,24 @@ class RPCServer {
    */
   void Start() {
     listen_sock_.Create();
+    listen_sock_2.Create();
+    //listen_sock_3.Create();
     my_port_ = listen_sock_.TryBindHost(host_, port_, port_end_);
     LOG(INFO) << "bind to " << host_ << ":" << my_port_;
+    my_port_2 = listen_sock_2.TryBindHost(host_,(port_+1),port_end_);
+    LOG(INFO) << "Second Port "<<host_<<":" << my_port_2;
+    //my_port_3 = listen_sock_3.TryBindHost(host_,(port_+2),port_end_);
+    //LOG(INFO) << "Third Port "<<host_<<":" << my_port_3;
+
     listen_sock_.Listen(1);
+    listen_sock_2.Listen(1);
+    //listen_sock_3.Listen(1);
     std::future<void> proc(std::async(std::launch::async, &RPCServer::ListenLoopProc, this));
     proc.get();
     // Close the listen socket
     listen_sock_.Close();
+    listen_sock_2.Close();
+    //listen_sock_3.Close();
   }
 
  private:
@@ -126,11 +138,29 @@ class RPCServer {
       support::TCPSocket conn;
       support::SockAddr addr("0.0.0.0", 0);
       std::string opts;
+      support::TCPSocket conn2;
+      support::SockAddr addr2("0.0.0.0", 0);
+      std::string opts2;
+      //support::TCPSocket conn3;
+      //support::SockAddr addr3("0.0.0.0", 0);
+      //std::string opts3;
+
+      std::string matchkey,matchkey2;//matchkey3;
       try {
         // step 1: setup tracker and report to tracker
         tracker.TryConnect();
+        LOG(INFO)<<"Trying to accept connection first time.\n";
+        // Report resource to tracker and get key
+        tracker.ReportResourceAndGetKey(my_port_, &matchkey);
+        LOG(INFO)<<"Matchkey 1: "<<matchkey;
+        tracker.ReportResourceAndGetKey(my_port_2, &matchkey2);
+        LOG(INFO)<<"Matchkey 2: "<<matchkey2;
+        /*
+        tracker.ReportResourceAndGetKey(my_port_3, &matchkey3);
+        LOG(INFO)<<"Matchkey 2: "<<matchkey3;
+*/
         // step 2: wait for in-coming connections
-        AcceptConnection(&tracker, &conn, &addr, &opts);
+        AcceptConnection(&tracker, &conn, &addr, &opts,2, matchkey);
       } catch (const char* msg) {
         LOG(WARNING) << "Socket exception: " << msg;
         // close tracker resource
@@ -144,55 +174,141 @@ class RPCServer {
       }
 
 
+
       int timeout = GetTimeOutFromOpts(opts);
+
+      timeout = 1000;
+      LOG(INFO)<<"Opts 1 and 2 "<<opts<<" "<<opts2;
 #if defined(__linux__) || defined(__ANDROID__) 
-      // step 3: serving
-      if (timeout != 0) {
-        const pid_t timer_pid = fork();
-        if (timer_pid == 0) {
-          // Timer process
-          sleep(timeout);
-          exit(0);
-        }
+      // step 3: serving first server
+      //if (timeout != 0) {
+    	  const pid_t timer_pid = fork();
+    	  if (timer_pid == 0) {
+    		  // Timer process
+    		  sleep(timeout);
+    		  exit(0);
+    	  }
 
-        const pid_t worker_pid = fork();
-        if (worker_pid == 0) {
-          // Worker process
-          ServerLoopProc(conn, addr);
-          exit(0);
-        }
+    	  const pid_t worker_pid = fork();
+    	  if (worker_pid == 0) {
+    		  //AcceptConnection(&tracker, &conn, &addr, &opts,2, matchkey);
+    		  // Worker process
+    		  ServerLoopProc(conn, addr);
+    		  exit(0);
+    	  }
+      //}
 
-        int status = 0;
-        const pid_t finished_first = waitPidEintr(&status);
+    	  try {
+    	 		// step 1: setup tracker and report to tracker
+    	 		//tracker.TryConnect();
+    	 		LOG(INFO)<<"Trying to connect second time.\n";
+    	 		// step 2: wait for in-coming connections
+
+    	 		AcceptConnection2(&tracker, &conn2, &addr2, &opts2,2, matchkey2);
+    	 		std::cout<<"addr: "<<opts2<<std::endl;
+    	       } catch (const char* msg) {
+    	 		LOG(WARNING) << "Socket exception: " << msg;
+    	 		// close tracker resource
+    	 		tracker.Close();
+    	 		continue;
+    	 	  } catch (const std::exception& e) {
+    	 		  // close tracker resource
+    	 		tracker.Close();
+    	 		LOG(WARNING) << "Exception standard: " << e.what();
+    	 		continue;
+    	 	  }
+
+    	 	 int timeout2 = GetTimeOutFromOpts(opts2);
+    	 	       timeout2 = 1000;
+    	  // step 3: serving
+    	//  if (timeout2 != 0) {
+    		  const pid_t timer_pid2 = fork();
+    		  if (timer_pid2 == 0) {
+    			  // Timer process
+    			  sleep(timeout2);
+    			  exit(0);
+    		  }
+
+    		  const pid_t worker_pid2 = fork();
+    		  if (worker_pid2 == 0) {
+    			  //AcceptConnection(&tracker, &conn2, &addr2, &opts2,2, matchkey2);
+    			  // Worker process
+    			  LOG(INFO)<<"2nd worker started";
+    			  ServerLoopProc(conn2, addr2);
+    			  exit(0);
+    		  }
+    	 // }
+    	  int status = 0;
+    	  pid_t finished_first = waitPidEintr(&status);
+
+    	  if (finished_first == timer_pid) {
+    		  kill(worker_pid, SIGKILL);
+    	  } else if (finished_first == worker_pid) {
+    		  kill(timer_pid, SIGKILL);
+    	  } else if (finished_first == timer_pid2){
+    		  kill(worker_pid2, SIGKILL);
+    	  } else if (finished_first == worker_pid2){
+    		  kill(timer_pid2, SIGKILL);
+    	  }
+    	  else {
+    		  LOG(INFO) << "Child pid=" << finished_first << " unexpected, but still continue.";
+    	  }
+
+    	  int status_second = 0;
+    	  waitPidEintr(&status_second);
+
+    	  // Logging.
+    	  if (finished_first == timer_pid) {
+    		  LOG(INFO) << "Child pid=" << worker_pid << " killed (timeout = " << timeout
+    				  << "), Process status = " << status_second;
+    	  } else if (finished_first == worker_pid) {
+    		  LOG(INFO) << "Child pid=" << timer_pid << " killed, Process status = " << status_second;
+    	  }
+    	  else if (finished_first == timer_pid2){
+    		  LOG(INFO) << "Child pid=" << worker_pid2 << " killed (timeout = " << timeout
+    		      				  << "), Process status = " << status_second;
+    	  }
+    	  else if (finished_first == worker_pid2){
+    		  LOG(INFO)<< "Child pid=" << timer_pid2 << " killed, Process status = " << status_second;
+    	  }
+
+    	  // Wait for the result
+		  //int status = 0;
+
+
+        //int status = 0;
+       finished_first = waitPidEintr(&status);
         if (finished_first == timer_pid) {
           kill(worker_pid, SIGKILL);
         } else if (finished_first == worker_pid) {
           kill(timer_pid, SIGKILL);
-        } else {
+        }else if (finished_first == timer_pid2){
+  		  kill(worker_pid2, SIGKILL);
+  	  } else if (finished_first == worker_pid2){
+  		  kill(timer_pid2, SIGKILL);
+  	  }	 else {
           LOG(INFO) << "Child pid=" << finished_first << " unexpected, but still continue.";
         }
 
-        int status_second = 0;
+        status_second = 0;
         waitPidEintr(&status_second);
 
         // Logging.
         if (finished_first == timer_pid) {
-          LOG(INFO) << "Child pid=" << worker_pid << " killed (timeout = " << timeout
-                    << "), Process status = " << status_second;
+        	LOG(INFO) << "Child pid=" << worker_pid << " killed (timeout = " << timeout
+        			<< "), Process status = " << status_second;
         } else if (finished_first == worker_pid) {
-          LOG(INFO) << "Child pid=" << timer_pid << " killed, Process status = " << status_second;
+        	LOG(INFO) << "Child pid=" << timer_pid << " killed, Process status = " << status_second;
         }
-      } else {
-        auto pid = fork();
-        if (pid == 0) {
-          ServerLoopProc(conn, addr);
-          exit(0);
+        else if (finished_first == timer_pid2){
+        	LOG(INFO) << "Child pid=" << worker_pid2 << " killed (timeout = " << timeout
+        			<< "), Process status = " << status_second;
         }
-        // Wait for the result
-        int status = 0;
-        wait(&status);
-        LOG(INFO) << "Child pid=" << pid << " exited, Process status =" << status;
-      }
+        else if (finished_first == worker_pid2){
+        	LOG(INFO)<< "Child pid=" << timer_pid2 << " killed, Process status = " << status_second;
+        }
+
+
 #elif defined(WIN32)
       auto start_time = high_resolution_clock::now();
       try {
@@ -205,10 +321,13 @@ class RPCServer {
       LOG(INFO) << "Serve Time " << duration_cast<milliseconds>(dur).count() << "ms";
 #endif
       // close from our side.
-      LOG(INFO) << "Socket Connection Closed";
+      LOG(INFO) << "No Socket Connection Closed";
       conn.Close();
     }
   }
+
+
+
 
   /*!
    * \brief AcceptConnection Accepts the RPC Server connection.
@@ -222,17 +341,19 @@ class RPCServer {
                         support::TCPSocket* conn_sock,
                         support::SockAddr* addr, 
                         std::string* opts, 
-                        int ping_period = 2) {
+                        int ping_period = 2, std::string matchkey="") {
     std::set<std::string> old_keyset;
-    std::string matchkey;
+    //std::string matchkey;
 
     // Report resource to tracker and get key
-    tracker->ReportResourceAndGetKey(my_port_, &matchkey);
+    //tracker->ReportResourceAndGetKey(my_port_, &matchkey);
+
 
     while (true) {
       tracker->WaitConnectionAndUpdateKey(listen_sock_, my_port_, ping_period, &matchkey);
       support::TCPSocket conn = listen_sock_.Accept(addr);
 
+      LOG(INFO)<<"Address received: "<<addr->AsString();
       int code = kRPCMagic;
         CHECK_EQ(conn.RecvAll(&code, sizeof(code)), sizeof(code));
       if (code != kRPCMagic) {
@@ -280,7 +401,83 @@ class RPCServer {
         return;
       }
     }
+    LOG(INFO)<<"Accept Connection Terminated.";
   }
+
+  /*!
+    * \brief AcceptConnection Accepts the RPC Server connection.
+    * \param tracker Tracker details.
+    * \param conn_sock New connection information.
+    * \param addr New connection address information.
+    * \param opts Parsed options for socket
+    * \param ping_period Timeout for select call waiting
+    */
+   void AcceptConnection2(TrackerClient* tracker,
+                         support::TCPSocket* conn_sock,
+                         support::SockAddr* addr,
+                         std::string* opts,
+                         int ping_period = 2, std::string matchkey="") {
+     std::set<std::string> old_keyset;
+     //std::string matchkey;
+     LOG(INFO)<<"2nd Accept Connection.";
+
+     // Report resource to tracker and get key
+     //tracker->ReportResourceAndGetKey(my_port_2, &matchkey);
+
+
+     while (true) {
+       tracker->WaitConnectionAndUpdateKey(listen_sock_2, my_port_2, ping_period, &matchkey);
+       support::TCPSocket conn = listen_sock_2.Accept(addr);
+
+       LOG(INFO)<<"Address received 2: "<<addr->AsString();
+       int code = kRPCMagic;
+         CHECK_EQ(conn.RecvAll(&code, sizeof(code)), sizeof(code));
+       if (code != kRPCMagic) {
+         conn.Close();
+         LOG(FATAL) << "Client connected is not TVM RPC server";
+         continue;
+       }
+
+       int keylen = 0;
+       CHECK_EQ(conn.RecvAll(&keylen, sizeof(keylen)), sizeof(keylen));
+
+       const char* CLIENT_HEADER = "client:";
+       const char* SERVER_HEADER = "server:";
+       std::string expect_header = CLIENT_HEADER + matchkey;
+       std::string server_key = SERVER_HEADER + key_;
+       if (size_t(keylen) < expect_header.length()) {
+         conn.Close();
+         LOG(INFO) << "Wrong client header length";
+         continue;
+       }
+
+       CHECK_NE(keylen, 0);
+       std::string remote_key;
+       remote_key.resize(keylen);
+       CHECK_EQ(conn.RecvAll(&remote_key[0], keylen), keylen);
+
+       std::stringstream ssin(remote_key);
+       std::string arg0;
+       ssin >> arg0;
+       if (arg0 != expect_header) {
+         code = kRPCMismatch;
+         CHECK_EQ(conn.SendAll(&code, sizeof(code)), sizeof(code));
+         conn.Close();
+         LOG(WARNING) << "Mismatch key from" << addr->AsString();
+         continue;
+       } else {
+         code = kRPCSuccess;
+         CHECK_EQ(conn.SendAll(&code, sizeof(code)), sizeof(code));
+         keylen = int(server_key.length());
+         CHECK_EQ(conn.SendAll(&keylen, sizeof(keylen)), sizeof(keylen));
+         CHECK_EQ(conn.SendAll(server_key.c_str(), keylen), keylen);
+         LOG(INFO) << "Connection success " << addr->AsString();
+         ssin >> *opts;
+         *conn_sock = conn;
+         return;
+       }
+     }
+   }
 
   /*!
    * \brief ServerLoopProc The Server loop process.
@@ -313,11 +510,15 @@ class RPCServer {
   std::string host_;
   int port_;
   int my_port_;
+  int my_port_2; //new port
+  int my_port_3;//new port
   int port_end_;
   std::string tracker_addr_;
   std::string key_;
   std::string custom_addr_;
   support::TCPSocket listen_sock_;
+  support::TCPSocket listen_sock_2;//2nd listening socket.
+  support::TCPSocket listen_sock_3;//3rd listening socket
   support::TCPSocket tracker_sock_;
 };
 

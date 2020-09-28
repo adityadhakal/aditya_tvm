@@ -86,6 +86,7 @@ class TrackerClient {
 
       // Receive status and validate
       std::string remote_status = tracker_sock_.RecvBytes();
+      LOG(INFO)<<"TryConnect called. Remote Status: "<<remote_status<<std::endl;
       CHECK_EQ(std::stoi(remote_status), static_cast<int>(TrackerCode::kSuccess));
     }
   }
@@ -111,15 +112,16 @@ class TrackerClient {
       if (custom_addr_.empty()) {
         custom_addr_ = "null";
       }
-
+      std::cout<<"Matchkey: "<<*matchkey<<std::endl;
       std::ostringstream ss;
       ss << "[" << static_cast<int>(TrackerCode::kPut) << ", \"" << key_ << "\", ["
          << port << ", \"" << *matchkey << "\"], " << custom_addr_ << "]";
-
+      LOG(INFO)<<"report to tracker: "<<ss.str()<<std::endl;
       tracker_sock_.SendBytes(ss.str());
 
       // Receive status and validate
       std::string remote_status = tracker_sock_.RecvBytes();
+      LOG(INFO)<<"Remote Status: "<<remote_status;
       CHECK_EQ(std::stoi(remote_status), static_cast<int>(TrackerCode::kSuccess));
     } else {
         *matchkey = key_;
@@ -139,6 +141,7 @@ class TrackerClient {
                                   std::string *matchkey) {
     int unmatch_period_count = 0;
     int unmatch_timeout = 4;
+    LOG(INFO)<<"WaitConnectionAndUpdateKey Port No. "<<port<<" Match Key "<<*matchkey;
     while (true) {
       if (!tracker_sock_.IsClosed()) {
         support::PollHelper poller;
@@ -149,13 +152,17 @@ class TrackerClient {
           ss << "[" << int(TrackerCode::kGetPendingMatchKeys) << "]";
           tracker_sock_.SendBytes(ss.str());
 
+          LOG(INFO)<<"WaitConnectionAndUpdateKey: ss string: "<<ss.str();
+
           // Receive status and validate
           std::string pending_keys = tracker_sock_.RecvBytes();
           old_keyset_.insert(*matchkey);
+          LOG(INFO)<<"Pending keys. "<<pending_keys;
 
           // if match key not in pending key set
           // it means the key is acquired by a client but not used.
           if (pending_keys.find(*matchkey) == std::string::npos) {
+        	  LOG(INFO)<<"Key acquired by client but not used.";
               unmatch_period_count += 1;
           } else {
               unmatch_period_count = 0;
