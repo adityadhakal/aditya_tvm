@@ -253,6 +253,7 @@ class RPCRunner(Runner):
         results = []
         remote_args = (self.key, self.host, self.port, self.priority, self.timeout)
 
+        print("------------ Running the build results. total build results ", len(measure_inputs))
         for i in range(0, len(measure_inputs), self.n_parallel):
             futures = []
             for measure_inp, build_res in zip(measure_inputs[i:i+self.n_parallel],
@@ -455,6 +456,7 @@ def run_through_rpc(measure_input, build_result,
         The reference output used for checking correctness
     """
     if isinstance(build_result, MeasureResult):
+        print("discarded 1 result--------")
         return build_result
 
     tic = time.time()

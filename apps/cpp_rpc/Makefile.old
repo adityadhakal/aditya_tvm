@@ -18,8 +18,8 @@
 # Makefile to compile RPC Server.
 TVM_ROOT=$(shell cd ../..; pwd)
 DMLC_CORE=${TVM_ROOT}/3rdparty/dmlc-core
-TVM_RUNTIME_DIR?=/home/adhak001/dev_tvm/aditya_tvm/build
-OS?=Linux
+TVM_RUNTIME_DIR?=
+OS?=
 
 # Android can not link pthrad, but Linux need.
 ifeq ($(OS), Linux)
