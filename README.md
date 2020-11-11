@@ -15,6 +15,21 @@
 <!--- specific language governing permissions and limitations -->
 <!--- under the License. -->
 
+Instructions for recreating the Error 
+=====================================
+- First back-up your existing files
+- replace the measure_methods.py file located in `tvm_root/python/tvm/autotvm/measure` with one found in this repository
+- compile the TVM by following cmd arguments `cd python; python setup.py install --user; cd ..`
+- Run any client example.
+
+For server side:
+- A C++ RPC server should be located in `tvm_root/apps/cpp_rpc` It can be compiled to generate a executable server.
+- Run a C++ RPC server with following commands replacing the IP address and port with right IP address and port `./tvm_rpc server --host=192.168.0.90 --port=9000 --port-end=9090 --tracker=192.168.0.20:9190 --key=v100`
+
+Running the experiment
+Run any client example from client node.
+Logs should soon show the errors in both client and server side
+
 <img src=https://raw.githubusercontent.com/apache/incubator-tvm-site/master/images/logo/tvm-logo-small.png width=128/> Open Deep Learning Compiler Stack
 ==============================================
 [Documentation](https://tvm.apache.org/docs) |
